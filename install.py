@@ -29,6 +29,16 @@ if os.getuid() != 0:
     sys.exit(1)
 
 
+####################################### Quantity tracking
+print "Would you like oscar to track quantities of scanned items?"
+print "If yes, every time an item is scanned Trello will increase a quantity displayed next to the item's name."
+track_item_quantity = raw_input('y/n: ')
+while track_item_quantity not in ['y', 'n']:
+    track_item_quantity = raw_input("Please input 'y' or 'n': ")
+# Convert to boolean
+track_item_quantity = {'y': True, 'n': False}[track_item_quantity]
+
+
 ######################################## Digit-Eyes
 print "You need accounts with a few APIs to use Oscar. First of all,"
 print "go to"
@@ -201,6 +211,8 @@ trello_db_board: '{trello_db_board}'
 
 digiteyes_app_key: '{digiteyes_app_key}'
 digiteyes_auth_key: '{digiteyes_auth_key}'
+
+track_item_quantity: {track_item_quantity}
 '''.format(**locals()))
 oscar_yaml.close()
 
