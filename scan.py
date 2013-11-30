@@ -137,22 +137,22 @@ def add_quantity(card_name, qty):
     """
     return card_name + " (%i)" % qty
 
-def remove_quantity(item):
+def remove_quantity(card_name):
     """Return name without quantity.
     >>> remove_quantity('name (2)')
     'name'
     """
-    return card_name.split(' (')[0]
+    return card_name.split(' (')[0].strip()
 
 def item_quantity(card_name):
     """Return quantity in card_name.
     >>> item_quantity('name (2)')
     2
     >>> item_quantity('name')
-    0 
+    1 
     """
-    qty = 0
-    if card_name.find(' ('):
+    qty = 1
+    if card_name.find(' (') != -1:
         qty = int(card_name.split('(')[1].split(')')[0]) 
     return qty
 
@@ -171,16 +171,16 @@ def add_grocery_item(trello_api, item):
 
     if bool(conf.get()['track_item_quantity']):
         # Include item quantity in item name if oscar is configd
-        matching_card = matching_card(item, cards)
-        if matching_card is not None:
+        mcard = matching_card(item, cards)
+        if mcard is not None:
             # Update existing item's quantity
-            qty = item_quantity(matching_card['name'])
+            qty = item_quantity(mcard['name'])
             name_w_qty = add_quantity(item, qty + 1)
-            matching_card.update_name(name_w_quantity)
+            trello_api.cards.update_name(mcard['id'], name_w_qty)
         else:
             # Add new item with qty 1
             name_w_qty = add_quantity(item, 1)
-            add_item_to_list(name_w_quantity)
+            add_item_to_list(name_w_qty)
     else:
         # Add item if it's not there already
         if item not in card_names:
