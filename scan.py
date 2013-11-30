@@ -135,7 +135,7 @@ def add_quantity(card_name, qty):
     >>> add_quantity('name', 2) 
     'name (2)'
     """
-    return card_name + "(%i)" % qty
+    return card_name + " (%i)" % qty
 
 def remove_quantity(item):
     """Return name without quantity.
