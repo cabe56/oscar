@@ -118,7 +118,48 @@ def match_description_rule(trello_db, desc):
             return r
     return None
 
+def matching_card(item, cards):
+    """Return first card whose name matches item.
+    >>> cards = [{'name': 'random', 'id':1}, {'name': 'test', 'id': 2}, {'name': 'test', 'id': 3}]
+    >>> matching_card('test', cards)
+    {'name': 'test', 'id': 2}
+    """
+    card = None
+    matches = filter(lambda c: c['name'] == item, cards)
+    if len(matches) > 0:
+        card = matches[0]
+    return card
 
+def add_quantity(card_name, qty):
+    """ Return name with quantity.
+    >>> add_quantity('name', 2) 
+    'name (2)'
+    """
+    return card_name + "(%i)" % qty
+
+def remove_quantity(item):
+    """Return name without quantity.
+    >>> remove_quantity('name (2)')
+    'name'
+    """
+    return card_name.split(' (')[0]
+
+def item_quantity(card_name):
+    """Return quantity in card_name.
+    >>> item_quantity('name (2)')
+    2
+    >>> item_quantity('name')
+    0 
+    """
+    qty = 0
+    if card_name.find(' ('):
+        qty = int(card_name.split('(')[1].split(')')[0]) 
+    return qty
+
+def add_item_to_list(item):
+    print "Adding '{0}' to grocery list".format(item)
+    trello_api.lists.new_card(grocery_list['id'], item)
+    
 def add_grocery_item(trello_api, item):
     """Adds the given item to the grocery list (if it's not already present)."""
     # Get the current grocery list
@@ -126,15 +167,26 @@ def add_grocery_item(trello_api, item):
     all_lists = trello_api.boards.get_list(grocery_board_id)
     grocery_list = [x for x in all_lists if x['name'] == conf.get()['trello_grocery_list']][0]
     cards = trello_api.lists.get_card(grocery_list['id'])
-    card_names = [card['name'] for card in cards]
+    card_names = [remove_quantity(card['name']) for card in cards]
 
-    # Add item if it's not there already
-    if item not in card_names:
-        print "Adding '{0}' to grocery list".format(item)
-        trello_api.lists.new_card(grocery_list['id'], item)
+    if bool(conf.get()['track_item_quantity']):
+        # Include item quantity in item name if oscar is configd
+        matching_card = matching_card(item, cards)
+        if matching_card is not None:
+            # Update existing item's quantity
+            qty = item_quantity(matching_card['name'])
+            name_w_qty = add_quantity(item, qty + 1)
+            matching_card.update_name(name_w_quantity)
+        else:
+            # Add new item with qty 1
+            name_w_qty = add_quantity(item, 1)
+            add_item_to_list(name_w_quantity)
     else:
-        print "Item '{0}' is already on the grocery list; not adding".format(item)
-
+        # Add item if it's not there already
+        if item not in card_names:
+            add_item_to_list(item)
+        else:
+            print "Item '{0}' is already on the grocery list; not adding".format(item)
 
 trello_api = trello.TrelloApi(conf.get()['trello_app_key'])
 trello_api.set_token(conf.get()['trello_token'])
